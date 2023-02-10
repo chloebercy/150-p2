@@ -4,10 +4,13 @@
 
 #include "queue.h"
 
-typedef struct item_t {
+
+typedef struct item* item_p;
+
+struct item {
 	void* data;
-	struct item *next;
-} item, *item_p;
+	item_p next;
+};
 
 struct queue {
 	/* https://stackoverflow.com/questions/10768947/typedef-struct-pointer-definition */
@@ -19,15 +22,15 @@ struct queue {
 queue_t queue_create(void)
 {
 	/* https://computer.howstuffworks.com/c31.htm */
-	queue_t newQueuePtr = (queue_t) malloc(sizeof(queue));
+	queue_t newQueuePtr = (queue_t) malloc(sizeof(struct queue));
 
 	if (newQueuePtr == NULL){
 		return NULL;
 	}
 
-	newQueue->head = NULL;
-	newQueue->head = NULL;
-	newQueue->length = 0;
+	newQueuePtr->head = NULL;
+	newQueuePtr->head = NULL;
+	newQueuePtr->length = 0;
 	return newQueuePtr;
 }
 
@@ -46,7 +49,7 @@ int queue_enqueue(queue_t queue, void *data)
 		return -1; 
 	}
 
-	item_p newItemPtr = (itemp_p) malloc(sizeof(item));
+	item_p newItemPtr = (item_p) malloc(sizeof(struct item));
 	if (!newItemPtr){
 		return -1;
 	}
@@ -105,7 +108,6 @@ int queue_iterate(queue_t queue, queue_func_t func)
 		return -1;
 	}
 	
-	void (*func)()
 	item_p iterItem;
 	for (iterItem = queue->head; iterItem != NULL; iterItem = iterItem->next){
 		func(queue, iterItem->data);
