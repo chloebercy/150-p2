@@ -87,16 +87,31 @@ int queue_dequeue(queue_t queue, void **data)
 
 int queue_delete(queue_t queue, void *data)
 {
-	// OH - can I ask: do we check if pointers point to same memory? 
+	// OH / need to see - can we check if pointers point to same memory w/o undef behavior? 
 	if (!queue || !data ){
 		return -1;
 	}
 
-	/*item_p iterItem;
-	for (iterItem = queue->head; iterItem != NULL; iterItem = iterItem->next){
-		if ()
-	}*/
+	item_p iterItem = queue->head, prevItem;
+	
+	if (iterItem->data == data) {
+        queue->head = iterItem->next;
+        free(iterItem); 
+		queue->length--;
+        return 0;
+    }
 
+	while (iterItem != NULL && iterItem->data != data) {
+        prevItem = iterItem;
+        iterItem = iterItem->next;
+    }
+
+	if (iterItem == NULL){
+		return -1;
+	}
+
+	prevItem->next = iterItem->next;
+	free(iterItem); 
 	queue->length--;
 	return 0;
 }
