@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "queue.h"
 
@@ -109,7 +110,6 @@ int queue_delete(queue_t queue, void *data)
 	if (iterItem == NULL){
 		return -1;
 	}
-
 	prevItem->next = iterItem->next;
 	free(iterItem); 
 	queue->length--;
