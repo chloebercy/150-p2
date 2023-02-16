@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../libuthread/queue.h" // bad
+#include "../libuthread/uthread.h" // bad
 
 void thread3(void *arg)
 {
