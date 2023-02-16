@@ -12,7 +12,6 @@
 
 struct uthread_tcb {
 	uthread_ctx_t *uthread_ctx; 
-	//int state;  
 };
 
 struct uthread_tcb **current = NULL; 
@@ -33,6 +32,7 @@ void uthread_yield(void)
 	uthread_ctx_t *uthread_ctx_next;
 	queue_dequeue(*q, (void**)&uthread_ctx_next);
 	(*current)->uthread_ctx = uthread_ctx_next;
+	queue_enqueue(*q, uthread_ctx_prev);
 
 	// swapcontext()
 	uthread_ctx_switch(uthread_ctx_prev, uthread_ctx_next); // will trigger uthread_ctx_next execution
@@ -43,10 +43,18 @@ void uthread_exit(void)
 	// destroy current tcb stack
 	uthread_ctx_destroy_stack(uthread_current()->uthread_ctx->uc_stack.ss_sp);
 
-	//queue_delete(*q, uthread_current()->uthread_ctx); should not be in queue
-
 	// free context pointed to by current
 	free(uthread_current()->uthread_ctx); 
+
+	// if more threads, switch to next thread in queue
+	if(queue_length(*q) < 1){
+		return;
+	}
+	
+	uthread_ctx_t *uthread_ctx_next;
+	queue_dequeue(*q, (void**)&uthread_ctx_next);
+	(*current)->uthread_ctx = uthread_ctx_next;
+	setcontext(uthread_ctx_next);
 }
 
 int uthread_create(uthread_func_t func, void *arg)
@@ -82,10 +90,10 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	// create first thread & queue
 	uthread_create(func, arg);
 
-	// add idle to end of queue
-	queue_enqueue(*q, idle); 
-
-	uthread_yield();
+	// wait until queue is empty, strings all exited
+	while(queue_length(*q) > 0){
+		uthread_yield();
+	}
 	return 0;
 }
 
