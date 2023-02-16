@@ -41,7 +41,7 @@ void uthread_yield(void)
 void uthread_exit(void)
 {
 	// destroy current tcb stack
-	uthread_ctx_destroy_stack(&(uthread_current()->uthread_ctx->uc_stack));
+	uthread_ctx_destroy_stack(uthread_current()->uthread_ctx->uc_stack.ss_sp);
 
 	//queue_delete(*q, uthread_current()->uthread_ctx); should not be in queue
 
@@ -63,9 +63,14 @@ int uthread_create(uthread_func_t func, void *arg)
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
+	// to shut up unused parameter error
+	preempt = 1; 
+	printf("test print preempt 1 = %d\n", preempt);
+
 	// initialize global queue pointer q
-	*q = queue_create();
-	
+	queue_t newQueue = queue_create();
+	q = &newQueue;
+
 	// create uthread for main/idle 
 	uthread_ctx_t *idle = (uthread_ctx_t*)malloc(sizeof(uthread_ctx_t));
 
@@ -92,5 +97,6 @@ void uthread_block(void)
 void uthread_unblock(struct uthread_tcb *uthread)
 {
 	/* TODO Phase 3 */
+	uthread->uthread_ctx = NULL; // to shut up error
 }
 
