@@ -35,7 +35,7 @@ void uthread_yield(void)
 	queue_enqueue(*q, uthread_ctx_prev);
 
 	// swapcontext()
-	uthread_ctx_switch(uthread_ctx_prev, uthread_ctx_next); // will trigger uthread_ctx_next execution
+	uthread_ctx_switch(uthread_ctx_prev, uthread_ctx_next);
 }
 
 void uthread_exit(void)
@@ -46,11 +46,12 @@ void uthread_exit(void)
 	// free context pointed to by current
 	free(uthread_current()->uthread_ctx); 
 
-	// if more threads, switch to next thread in queue
+	// check if queue is empty 
 	if(queue_length(*q) < 1){
 		return;
 	}
 	
+	// if more threads, switch to next thread in queue, update current
 	uthread_ctx_t *uthread_ctx_next;
 	queue_dequeue(*q, (void**)&uthread_ctx_next);
 	(*current)->uthread_ctx = uthread_ctx_next;
@@ -107,4 +108,3 @@ void uthread_unblock(struct uthread_tcb *uthread)
 	/* TODO Phase 3 */
 	uthread->uthread_ctx = NULL; // to shut up error
 }
-
