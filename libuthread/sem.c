@@ -6,26 +6,46 @@
 #include "private.h"
 
 struct semaphore {
-	/* TODO Phase 3 */
+	queue_t *q;
+	size_t *count;
+	int *lock;
 };
 
 sem_t sem_create(size_t count)
 {
-	/* TODO Phase 3 */
+	//initializing a new semaphore
+	sem_t *newSem = (sem_t*)malloc(sizeof(sem_t));
+	newSem->count = count;
+
+	return newSem;
 }
 
 int sem_destroy(sem_t sem)
 {
-	/* TODO Phase 3 */
+	free(sem);
 }
 
 int sem_down(sem_t sem)
 {
-	/* TODO Phase 3 */
+	// waiting for the count to become positive again and then decerements
+
+	sem->lock = 1; // equivalent to spinlock_lock(sem->lock) ?? i think
+	while (sem->count == 0) {
+		uthread_block(); // what is the difference between yield and block?
+	}
+	sem->count -= 1;
+	sem->lock = 0; // equivalent to spinlock_unlock(sem->lock)
 }
 
 int sem_up(sem_t sem)
 {
-	/* TODO Phase 3 */
+	// only incremements the count
+
+	sem->lock = 1; // lock
+	sem->count += 1;
+	/* begin the first thread in queue; last thread to call down() */
+
+
+	sem->lock = 0; // unlock
 }
 
