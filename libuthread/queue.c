@@ -24,11 +24,9 @@ queue_t queue_create(void)
 {
 	/* https://computer.howstuffworks.com/c31.htm */
 	queue_t newQueuePtr = (queue_t) malloc(sizeof(struct queue));
-
 	if (newQueuePtr == NULL){
 		return NULL;
 	}
-
 	newQueuePtr->head = NULL;
 	newQueuePtr->head = NULL;
 	newQueuePtr->length = 0;
