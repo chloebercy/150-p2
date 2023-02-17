@@ -12,11 +12,11 @@
 
 struct uthread_tcb {
 	uthread_ctx_t *uthread_ctx; 
-	//int state;  
+	//int state; // 0 = running, 1 = ready, -1 = blocked
 };
 
 struct uthread_tcb **current = NULL; 
-queue_t *q = NULL;
+queue_t *readyQ = NULL;
 
 struct uthread_tcb *uthread_current(void)
 {
@@ -31,22 +31,32 @@ void uthread_yield(void)
 
 	// set ctx_next pointer to next item in queue & update current
 	uthread_ctx_t *uthread_ctx_next;
-	queue_dequeue(*q, (void**)&uthread_ctx_next);
+	queue_dequeue(*readyQ, (void**)&uthread_ctx_next);
 	(*current)->uthread_ctx = uthread_ctx_next;
+	queue_enqueue(*readyQ, uthread_ctx_prev);
 
 	// swapcontext()
-	uthread_ctx_switch(uthread_ctx_prev, uthread_ctx_next); // will trigger uthread_ctx_next execution
+	uthread_ctx_switch(uthread_ctx_prev, uthread_ctx_next);
 }
 
 void uthread_exit(void)
 {
 	// destroy current tcb stack
-	uthread_ctx_destroy_stack(&(uthread_current()->uthread_ctx->uc_stack));
-
-	//queue_delete(*q, uthread_current()->uthread_ctx); should not be in queue
+	uthread_ctx_destroy_stack(uthread_current()->uthread_ctx->uc_stack.ss_sp);
 
 	// free context pointed to by current
 	free(uthread_current()->uthread_ctx); 
+
+	// check if queue is empty 
+	if(queue_length(*readyQ) < 1){
+		return;
+	}
+	
+	// if more threads, switch to next thread in queue, update current
+	uthread_ctx_t *uthread_ctx_next;
+	queue_dequeue(*readyQ, (void**)&uthread_ctx_next);
+	(*current)->uthread_ctx = uthread_ctx_next;
+	setcontext(uthread_ctx_next);
 }
 
 int uthread_create(uthread_func_t func, void *arg)
@@ -56,16 +66,21 @@ int uthread_create(uthread_func_t func, void *arg)
 	
 	void *top_of_stack = uthread_ctx_alloc_stack();
 	uthread_ctx_init(newThread, top_of_stack, func, arg);
-	queue_enqueue(*q, newThread);
+	queue_enqueue(*readyQ, newThread);
 
 	return 0;
 }
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
-	// initialize global queue pointer q
-	*q = queue_create();
-	
+	// to shut up unused parameter error
+	preempt = 1; 
+	printf("test print preempt 1 = %d\n", preempt);
+
+	// initialize global queue pointer readyQ
+	queue_t newQueue = queue_create();
+	readyQ = &newQueue;
+
 	// create uthread for main/idle 
 	uthread_ctx_t *idle = (uthread_ctx_t*)malloc(sizeof(uthread_ctx_t));
 
@@ -77,10 +92,10 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	// create first thread & queue
 	uthread_create(func, arg);
 
-	// add idle to end of queue
-	queue_enqueue(*q, idle); 
-
-	uthread_yield();
+	// wait until queue is empty, strings all exited
+	while(queue_length(*readyQ) > 0){
+		uthread_yield();
+	}
 	return 0;
 }
 
@@ -92,5 +107,5 @@ void uthread_block(void)
 void uthread_unblock(struct uthread_tcb *uthread)
 {
 	/* TODO Phase 3 */
+	uthread->uthread_ctx = NULL; // to shut up error
 }
-

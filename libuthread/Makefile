@@ -1,6 +1,6 @@
 # Target library
-lib := libuthread.a 
-objs:= queue.o 
+target := libuthread.a 
+objs := context.o queue.o uthread.o
 
 CC := gcc
 CFLAGS := -Wall -Wextra -Werror -MMD
@@ -11,17 +11,11 @@ ifneq ($(V),1)
 Q = @
 endif
 
-all: $(lib)
-
-## TODO: Phase 1
+all: $(target)
 
 #Dep Tracking
 deps := $(patstubt %.o, %.d, $(objs))
 -include $(deps)
-
-queue: $(objs)
-	@echo "CC $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ $^
 
 # https://stackoverflow.com/questions/31421616/c-creating-static-library-and-linking-using-a-makefile
 
@@ -38,7 +32,7 @@ libuthread.a: $(objs)
 
 clean:
 	@echo "clean"
-	$(Q)rm -f $(targets) $(objs) $(deps)
+	$(Q)rm -f $(target) $(objs) $(deps)
 
 
 

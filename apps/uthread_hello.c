@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <uthread.h>
+#include "../libuthread/uthread.h" // bad
 
 void hello(void *arg)
 {
