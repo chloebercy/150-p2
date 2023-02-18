@@ -84,11 +84,9 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 
 	// create uthread for main/idle 
 	struct uthread_tcb *idle = (struct uthread_tcb*)malloc(sizeof(struct uthread_tcb));
-	idle->uthread_ctx = (uthread_ctx_t*)malloc(sizeof(uthread_ctx_t)); //uthread_ctx_t *idle = (uthread_ctx_t*)malloc(sizeof(uthread_ctx_t));
+	idle->uthread_ctx = (uthread_ctx_t*)malloc(sizeof(uthread_ctx_t));
 
-	/* set global var struct double pointer "current" to TCB of idle 
-	struct uthread_tcb *currentTCB = (struct uthread_tcb*)malloc(sizeof(struct uthread_tcb));
-	currentTCB->uthread_ctx = idle;*/
+	// set global var struct double pointer "current" to TCB of idle 
 	current = &idle;
 
 	// create first thread & queue
@@ -104,20 +102,18 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 void uthread_block(void)
 {
 	// set ctx_prev pointer to current context
-	uthread_ctx_t *uthread_ctx_prev = uthread_current()->uthread_ctx;
+	struct uthread_tcb *uthread_prev = uthread_current();
 
 	// set ctx_next pointer to next item in queue & update current
-	uthread_ctx_t *uthread_ctx_next;
-	queue_dequeue(*ready_q, (void**)&uthread_ctx_next);
-	(*current)->uthread_ctx = uthread_ctx_next;
+	struct uthread_tcb *uthread_next;
+	queue_dequeue(*ready_q, (void**)&uthread_next);
+	current = &uthread_next;
 
 	// swapcontext()
-	uthread_ctx_switch(uthread_ctx_prev, uthread_ctx_next);
-
+	uthread_ctx_switch(uthread_prev->uthread_ctx, uthread_next->uthread_ctx);
 }
 
 void uthread_unblock(struct uthread_tcb *uthread)
 {
-	/* TODO Phase 3 */
-	uthread->uthread_ctx = NULL; // to shut up error
+	queue_enqueue(*ready_q, uthread);
 }

@@ -6,61 +6,67 @@
 #include "private.h"
 
 struct semaphore {
-	queue_t *blockedQ;
-	size_t *count;
+	queue_t blocked_q;
+	size_t count; // should this be a pointer?
 };
 
 sem_t sem_create(size_t count)
 {
 	//initializing a new semaphore
-	sem_t *newSem = (sem_t*)malloc(sizeof(sem_t));
+	sem_t newSem = (sem_t)malloc(sizeof(struct semaphore));
 
 	if (newSem == NULL){
 		return NULL;
 	}
 	
 	queue_t newQueue = queue_create();
-	newSem->blockedQ = &newQueue;
+	newSem->blocked_q = newQueue; 
 
-	newSem->count = count;
+	newSem->count = count; //newSem->count = (size_t*)malloc(sizeof(size_t));
 	
 	return newSem;
 }
 
 int sem_destroy(sem_t sem)
 {
-	if (semm == NULL || queue_length(sem->blockedQ)) != 0){
+	if (sem == NULL || queue_length(sem->blocked_q) != 0){
 		return -1;
 	}
 
-	queue_destroy(*(sem->blockedQ));
-	free(sem->count);
-	free(&sem);
+	queue_destroy(sem->blocked_q);
+	sem = NULL;
 	return 0;
 }
 
 int sem_down(sem_t sem)
 {
-	// waiting for the count to become positive again and then decerements
-
-	sem->lock = 1; // equivalent to spinlock_lock(sem->lock) ?? i think
-	while (sem->count == 0) {
-		queue_enqueue(sem->blockedQ, uthread_current()->uthread_ctx);
-		uthread_block(); // what is the difference between yield and block?
+	if (sem == NULL){
+		return -1;
 	}
+
+	while (sem->count == 0) {
+		queue_enqueue(sem->blocked_q, uthread_current());
+		uthread_block();
+	} // how to avoid starvation here?
+
 	sem->count -= 1;
-	sem->lock = 0; // equivalent to spinlock_unlock(sem->lock)
+	return 0;
 }
 
 int sem_up(sem_t sem)
 {
-	// only incremements the count
+	if (sem == NULL){
+		return -1;
+	}
 
-	sem->lock = 1; // lock
 	sem->count += 1;
-	/* begin the first thread in queue; last thread to call down() */
 
+	if (queue_length(sem->blocked_q) != 0){
+		struct uthread_tcb *uthread_next;
+		queue_dequeue(sem->blocked_q, (void**)&uthread_next);
+		uthread_unblock(uthread_next);
+	}
 
-	sem->lock = 0; // unlock
+	return 0;
 }
 
