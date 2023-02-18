@@ -6,23 +6,37 @@
 #include "private.h"
 
 struct semaphore {
-	queue_t *q;
+	queue_t *blockedQ;
 	size_t *count;
-	int *lock;
 };
 
 sem_t sem_create(size_t count)
 {
 	//initializing a new semaphore
 	sem_t *newSem = (sem_t*)malloc(sizeof(sem_t));
-	newSem->count = count;
 
+	if (newSem == NULL){
+		return NULL;
+	}
+	
+	queue_t newQueue = queue_create();
+	newSem->blockedQ = &newQueue;
+
+	newSem->count = count;
+	
 	return newSem;
 }
 
 int sem_destroy(sem_t sem)
 {
-	free(sem);
+	if (semm == NULL || queue_length(sem->blockedQ)) != 0){
+		return -1;
+	}
+
+	queue_destroy(*(sem->blockedQ));
+	free(sem->count);
+	free(&sem);
+	return 0;
 }
 
 int sem_down(sem_t sem)
@@ -31,6 +45,7 @@ int sem_down(sem_t sem)
 
 	sem->lock = 1; // equivalent to spinlock_lock(sem->lock) ?? i think
 	while (sem->count == 0) {
+		queue_enqueue(sem->blockedQ, uthread_current()->uthread_ctx);
 		uthread_block(); // what is the difference between yield and block?
 	}
 	sem->count -= 1;
