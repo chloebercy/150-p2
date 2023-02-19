@@ -84,9 +84,8 @@ int uthread_create(uthread_func_t func, void *arg)
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
-	// to shut up unused parameter error
-	preempt = 1; 
-	printf("test print preempt 1 = %d\n", preempt);
+	// to shut up unused parameter error 
+	if (preempt == 1) { printf("test print preempt 1 = %d\n", preempt); }
 
 	// Initialize queue, Define global queue pointer @ready_q
 	queue_t newQueue = queue_create();
