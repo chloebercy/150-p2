@@ -12,61 +12,71 @@
 
 struct uthread_tcb {
 	uthread_ctx_t *uthread_ctx; 
-	//int state; // 0 = running, 1 = ready, -1 = blocked
 };
 
-struct uthread_tcb **current = NULL; 
+// Global Variables
+struct uthread_tcb **current_uthread_tcb = NULL; 
 queue_t *ready_q = NULL;
+
 
 struct uthread_tcb *uthread_current(void)
 {
-	return *current;
-	/* ADD TODO Phase 3 */
+	return *current_uthread_tcb;
 }
 
 void uthread_yield(void)
 {
-	// set ctx_prev pointer to current context
+	// Set temporary uthread_tcb pointer to global variable @current_uthread_tcb
 	struct uthread_tcb *uthread_prev = uthread_current();
 
-	// set ctx_next pointer to next item in queue & update current
+	// Set temporary uthread_tcb pointer to next item in queue @ready_q & update @current_uthread_tcb
 	struct uthread_tcb *uthread_next;
 	queue_dequeue(*ready_q, (void**)&uthread_next);
-	current = &uthread_next;
+	current_uthread_tcb = &uthread_next;
+
+	// Enqueue previous uthread @uthread_prev to queue @ready_q
 	queue_enqueue(*ready_q, uthread_prev);
 
-	// swapcontext()
+	// Context Switch
 	uthread_ctx_switch(uthread_prev->uthread_ctx, uthread_next->uthread_ctx);
 }
 
 void uthread_exit(void)
 {
-	// destroy current tcb stack
+	// Destroy @current_uthread_tcb stack
 	uthread_ctx_destroy_stack(uthread_current()->uthread_ctx->uc_stack.ss_sp);
 
-	// free context pointed to by current
+	// Free uthread_ctx pointer member variable of @current_uthread_tcb
 	free(uthread_current()->uthread_ctx); 
 
-	// check if queue is empty 
+	// Check if queue is empty 
 	if(queue_length(*ready_q) < 1){
 		return;
 	}
 	
-	// if more threads, switch to next thread in queue, update current
+	// Queue is not empty: context switch to next thread in queue, update @current_uthread_tcb
 	struct uthread_tcb *uthread_next;
 	queue_dequeue(*ready_q, (void**)&uthread_next);
-	current = &uthread_next;
+	current_uthread_tcb = &uthread_next;
 	setcontext(uthread_next->uthread_ctx);
 }
 
 int uthread_create(uthread_func_t func, void *arg)
 {
-	// create newThread, initalize stack, makecontext(), add to queue;
+	// Initalize newTCB pointer, uthread_ctx pointer, top of stack pointer
 	struct uthread_tcb *newTCB = (struct uthread_tcb*)malloc(sizeof(struct uthread_tcb));
 	newTCB->uthread_ctx = (uthread_ctx_t*)malloc(sizeof(uthread_ctx_t));
-
 	void *top_of_stack = uthread_ctx_alloc_stack();
+
+	// Error Handling
+	if (newTCB == NULL || newTCB->uthread_ctx == NULL || top_of_stack == NULL){
+		return -1;
+	}
+
+	// Initialize thread's execution context
 	uthread_ctx_init(newTCB->uthread_ctx, top_of_stack, func, arg);
+
+	// Enqueue newTCB in queue @ready_q
 	queue_enqueue(*ready_q, newTCB);
 
 	return 0;
@@ -78,42 +88,44 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	preempt = 1; 
 	printf("test print preempt 1 = %d\n", preempt);
 
-	// initialize global queue pointer ready_q
+	// Initialize queue, Define global queue pointer @ready_q
 	queue_t newQueue = queue_create();
 	ready_q = &newQueue;
 
-	// create uthread for main/idle 
+	// Create uthread_tcb for main/idle 
 	struct uthread_tcb *idle = (struct uthread_tcb*)malloc(sizeof(struct uthread_tcb));
 	idle->uthread_ctx = (uthread_ctx_t*)malloc(sizeof(uthread_ctx_t));
 
-	// set global var struct double pointer "current" to TCB of idle 
-	current = &idle;
+	// Set @current_uthread_tcb to TCB of idle 
+	current_uthread_tcb = &idle;
 
-	// create first thread & queue
+	// Create first thread
 	uthread_create(func, arg);
 
-	// wait until queue is empty, strings all exited
+	// Wait until queue @ready_q is empty, all threads have exited
 	while(queue_length(*ready_q) > 0){
 		uthread_yield();
 	}
+
 	return 0;
 }
 
 void uthread_block(void)
 {
-	// set ctx_prev pointer to current context
+	// Set temporary uthread_tcb pointer to global variable @current_uthread_tcb
 	struct uthread_tcb *uthread_prev = uthread_current();
 
-	// set ctx_next pointer to next item in queue & update current
+	// Set temporary uthread_tcb pointer to next item in queue @ready_q & update @current_uthread_tcb
 	struct uthread_tcb *uthread_next;
 	queue_dequeue(*ready_q, (void**)&uthread_next);
-	current = &uthread_next;
+	current_uthread_tcb = &uthread_next;
 
-	// swapcontext()
+	// Context Switch
 	uthread_ctx_switch(uthread_prev->uthread_ctx, uthread_next->uthread_ctx);
 }
 
 void uthread_unblock(struct uthread_tcb *uthread)
 {
+	// Enqueue thread TCB in the ready queue @ready_q
 	queue_enqueue(*ready_q, uthread);
 }
