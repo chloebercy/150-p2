@@ -68,6 +68,25 @@ int queue_enqueue(queue_t queue, void *data)
 	return 0;
 }
 
+int queue_enqueue_first(queue_t queue, void *data)
+{
+	if (!queue || !data){
+		return -1; 
+	}
+
+	item_p newItemPtr = (item_p) malloc(sizeof(struct item));
+	if (!newItemPtr){
+		return -1;
+	}
+
+	newItemPtr->data = data;
+	newItemPtr->next = queue->head;
+	queue->head = newItemPtr;
+
+	queue->length++;
+	return 0;
+}
+
 int queue_dequeue(queue_t queue, void **data)
 {
 	/* https://github.com/kostakis/Generic-Queue/blob/master/queue.c */

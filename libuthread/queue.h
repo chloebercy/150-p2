@@ -46,6 +46,18 @@ int queue_destroy(queue_t queue);
 int queue_enqueue(queue_t queue, void *data);
 
 /*
+ * queue_enqueue - Enqueue data item
+ * @queue: Queue in which to enqueue item
+ * @data: Address of data item to enqueue
+ *
+ * Enqueue the address contained in @data in the first position of queue @queue.
+ *
+ * Return: -1 if @queue or @data are NULL, or in case of memory allocation error
+ * when enqueing. 0 if @data was successfully enqueued in @queue.
+ */
+int queue_enqueue_first(queue_t queue, void *data);
+
+/*
  * queue_dequeue - Dequeue data item
  * @queue: Queue in which to dequeue item
  * @data: Address of data pointer where item is received
