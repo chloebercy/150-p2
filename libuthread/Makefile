@@ -22,7 +22,7 @@ CC := gcc
 PANDOC += pandoc
 
 # General gcc options
-CFLAGS := -Wall -Wextra -Werror -MMD
+CFLAGS := -Wall -Wextra -Werror
 ## Debug flag
 ifneq ($(D),1)
 CFLAGS	+= -O2
