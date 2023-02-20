@@ -8,7 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../libuthread/uthread.h" // bad
+#include <unistd.h>
+
+#include <uthread.h>
 
 void hello(void *arg)
 {
@@ -19,7 +21,7 @@ void hello(void *arg)
 
 int main(void)
 {
-	uthread_run(false, hello, NULL);
+	uthread_run(true, hello, NULL);
 
 	return 0;
 }
