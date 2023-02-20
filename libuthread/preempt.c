@@ -6,7 +6,9 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
+#include <unistd.h>
 #include <stdio.h> // delete
+#include <string.h>
 
 #include "private.h"
 #include "uthread.h"
@@ -23,8 +25,8 @@ sigset_t block_alarm;
 
 void timer_handler(int signum)
 {
-	printf("ALARM\n");
-	if (signum != SIGVTALRM){
+	int check = write(1, "ALARM\n", 6);
+	if (signum != SIGVTALRM || check == -1){
 		return;
 	}
 	uthread_yield();
@@ -45,8 +47,9 @@ void preempt_enable(void)
 void preempt_start(bool preempt)
 {
 	printf("preempt gonna start!\n");
-	sigemptyset(&preempt_sa.sa_mask);
-    preempt_sa.sa_flags = 0;
+	memset (&preempt_sa, 0, sizeof(preempt_sa));
+	//sigemptyset(&preempt_sa.sa_mask);
+    //preempt_sa.sa_flags = 0;
     preempt_sa.sa_handler = timer_handler;
 	sigaction(SIGVTALRM, &preempt_sa, &previous_sa);
 
@@ -60,8 +63,8 @@ void preempt_start(bool preempt)
   	timer.it_value.tv_sec = 0;
 
 	if (preempt){
-		printf("started timer?\n");
-		setitimer(ITIMER_VIRTUAL, &timer, &previous_timer);
+		int check = setitimer(ITIMER_VIRTUAL, &timer, &previous_timer);
+		fprintf(stderr, "started timer? %d\n", check);
 	} else {
 		getitimer(ITIMER_VIRTUAL, &previous_timer);
 	}		
