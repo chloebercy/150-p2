@@ -21,8 +21,10 @@ void hello(void *arg)
 
 	int i = 0;
 	while (i<1000000) {
-		if (i % 100 == 0)
+		if (i % 10000 == 0){
 			printf(".");
+			preempt_check();
+		}
 		i++;
 	}
 
@@ -30,7 +32,7 @@ void hello(void *arg)
 	printf("\n\n\nHello world! 2\n");
 	preempt_disable();
 	while (i<1000000) {
-		if (i % 100 == 0)
+		if (i % 10000 == 0)
 			printf(".");
 		i++;
 	}
