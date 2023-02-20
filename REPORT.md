@@ -59,3 +59,8 @@ Similar to the `uthread_yield()` function, `uthread_block()` swaps the contexts 
 To release a semaphore, `sem_up()` is called. Just like the `sem_down()` function, it begins with checking to see if the semaphore is `NULL`. If it isn't, then the count is incremented. If there happens to be any threads in the `blocked_q`, it initializes a pointer to indicate the next thread to be executed, calls the `queue_dequeue()` function to take the oldest item in the `blocked_q`, and calls `uthread_unblock()` to put that item back into the `ready_q`.
 
 #### Preemption
+The preemption API exists to prevent uncooperative threads from keeping the processing resource for themselves. We have implemented the following functions: `preempt_start()`, `preempt_stop()`, `preempt_enable`, and `preempt_disable()`. 
+
+In `preempt_start()`, we simply configure the timer interrupt handler. It then takes `preempt`, the boolean value passed through the function's parameter and checks if it is true--if yes, the timer begins by calling the `setitimer()`. If not, then nothing happens. 
+
+`preempt_stop()` stops the thread preemption.
