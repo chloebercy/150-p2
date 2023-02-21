@@ -48,19 +48,30 @@ With that, we are left with the final function in our queue API, which is `uthre
 #### Semaphore API + uthread_block() + uthread_unblock()
 To control access to a common resource by multiple threads, we implemented the following functions in our semaphore API: `sem_create()`, `sem_destroy()`, `sem_down()`, `sem_up()`.
 
-In the `sem_create()` function, it initializes a new semaphore. Along with that, it also creates a new queue to which we set it to the `queue_t blocked_q` data member as defined in the `struct semaphore`. The reasoning behind this is so that the application can differentiate the threads that are ready for execution and the threads that are blocked from executing. The count of the semaphore is set to the `size_t count` parameter. 
+In the `sem_create()` function, it initializes a new semaphore. Along with that, it also creates a new queue to which we set it to the `queue_t blocked_q` data member as defined in the `struct semaphore`. The reasoning behind this is so that the application can differentiate the threads that are ready for execution and the threads that are blocked from executing. The count of the semaphore is set to the count passed through the `size_t count` parameter. 
 
-The `sem_destroy()` destroys the semaphore, as the name suggests. It checks to see if the semaphore is `NULL` or if there are any threads in the `blocked_q`. If either of those are true, then the function returns `-1`. If not, then `queue_destroy()` gets called to destroy the queue of blocked threads and returns `0` to indicate that the semaphore has been successfully destroyed. 
+The `sem_destroy()` destroys the semaphore, as the name suggests. It checks to see if the semaphore is `NULL` or if there are any threads in the `blocked_q`. If either of those are true, then the function returns `-1`. If not, then `queue_destroy()` gets called to destroy the queue of blocked threads and returns 0 to indicate that the semaphore has been successfully destroyed. 
 
 `sem_down()` is the function that is called when a thread asks to grab a resource. It takes a semaphore as a parameter and checks to see if it is `NULL`. If the count of the semaphore is 0, it enters a while-loop in which the current threads are queued to the `blocked_q`. Afterward, `uthread_block()` is called. Otherwise, the count is decremented.
 
 Similar to the `uthread_yield()` function, `uthread_block()` swaps the contexts of the current tcb with the next tcb. What sets these two functions apart, however, is that `uthread_yield()` queues the current thread back into the ready queue as aforementioned. To unblock the threads that are in the blocked queue--in other words, put the blocked threads back into the ready queue--we simply call `queue_enqueue()` and queue the current thread to the `ready_q`. All of this is defined in the `uthread_unblock()` function. 
 
-To release a semaphore, `sem_up()` is called. Just like the `sem_down()` function, it begins with checking to see if the semaphore is `NULL`. If it isn't, then the count is incremented. If there happens to be any threads in the `blocked_q`, it initializes a pointer to indicate the next thread to be executed, calls the `queue_dequeue()` function to take the oldest item in the `blocked_q`, and calls `uthread_unblock()` to put that item back into the `ready_q`.
+To release a semaphore, `sem_up()` is called. Just like the `sem_down()` function, it begins with checking to see if the semaphore is `NULL`. If it isn't, then the count is incremented. If there happens to be any threads in the `blocked_q`, it initializes a pointer to indicate the next thread to be executed, calls the `queue_dequeue()` function to take the oldest item in the `blocked_q`, and calls `uthread_unblock()` to put the item that has been pulled back into the `ready_q`.
 
 #### Preemption
 The preemption API exists to prevent uncooperative threads from keeping the processing resource for themselves. We have implemented the following functions: `preempt_start()`, `preempt_stop()`, `preempt_enable`, and `preempt_disable()`. 
 
 In `preempt_start()`, we simply configure the timer interrupt handler. It then takes `preempt`, the boolean value passed through the function's parameter and checks if it is true--if yes, the timer begins by calling the `setitimer()`. If not, then nothing happens. 
 
-`preempt_stop()` stops the thread preemption.
+`preempt_stop()` stops the thread preemption. This function does this by passing `NULL` into the `setitimer()` and `sigaction()` timers. This restores the previous timer configuration and action associated with the virtual alarm signals.
+
+`preempt_enable()` and `preempt_disable()` utilizes the `sigprocmask()` to block or unblock the signals, respectively. 
+
+#### Testing
+In order to ensure the functionality of the APIs, several test programs were used.
+
+Other than the ones already provided, we have created two programs: `queue_tester.c` to test the Queue API and `test_preempt.c` to test the preemption API. 
+
+In `queue_tester.c`, there are a few test cases to test each of the functions in the queue API. 
+
+#### Sources
