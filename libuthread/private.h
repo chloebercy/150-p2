@@ -78,6 +78,8 @@ int uthread_ctx_init(uthread_ctx_t *uctx, void *top_of_stack,
  */
 void preempt_start(bool preempt);
 
+void preempt_check(void); // DELETE
+
 /*
  * preempt_stop - Stop thread preemption
  *

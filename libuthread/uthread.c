@@ -26,6 +26,7 @@ struct uthread_tcb *uthread_current(void)
 
 void uthread_yield(void)
 {
+	preempt_disable();
 	// Set temporary uthread_tcb pointer to global variable @current_uthread_tcb
 	struct uthread_tcb *uthread_prev = uthread_current();
 
@@ -43,6 +44,8 @@ void uthread_yield(void)
 
 void uthread_exit(void)
 {
+	preempt_disable();
+	
 	// Destroy @current_uthread_tcb stack
 	uthread_ctx_destroy_stack(uthread_current()->uthread_ctx->uc_stack.ss_sp);
 
@@ -58,15 +61,18 @@ void uthread_exit(void)
 	struct uthread_tcb *uthread_next;
 	queue_dequeue(*ready_q, (void**)&uthread_next);
 	current_uthread_tcb = &uthread_next;
+
 	setcontext(uthread_next->uthread_ctx);
 }
 
 int uthread_create(uthread_func_t func, void *arg)
 {
 	// Initalize newTCB pointer, uthread_ctx pointer, top of stack pointer
+	preempt_disable();
 	struct uthread_tcb *newTCB = (struct uthread_tcb*)malloc(sizeof(struct uthread_tcb));
 	newTCB->uthread_ctx = (uthread_ctx_t*)malloc(sizeof(uthread_ctx_t));
 	void *top_of_stack = uthread_ctx_alloc_stack();
+	preempt_enable();
 
 	// Error Handling
 	if (newTCB == NULL || newTCB->uthread_ctx == NULL || top_of_stack == NULL){
@@ -77,17 +83,15 @@ int uthread_create(uthread_func_t func, void *arg)
 	uthread_ctx_init(newTCB->uthread_ctx, top_of_stack, func, arg);
 
 	// Enqueue newTCB in queue @ready_q
+	preempt_disable();
 	queue_enqueue(*ready_q, newTCB);
+	preempt_enable();
 
 	return 0;
 }
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
-	// to shut up unused parameter error
-	preempt = 1; 
-	printf("test print preempt 1 = %d\n", preempt);
-
 	// Initialize queue, Define global queue pointer @ready_q
 	queue_t newQueue = queue_create();
 	ready_q = &newQueue;
@@ -100,18 +104,29 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	current_uthread_tcb = &idle;
 
 	// Create first thread
-	uthread_create(func, arg);
+	int uthread_create_success = uthread_create(func, arg);
+
+	// Return -1 in case of failure
+	if (newQueue == NULL || idle == NULL || uthread_create_success != 0){
+		return -1;
+	}
+
+	preempt_start(preempt);
 
 	// Wait until queue @ready_q is empty, all threads have exited
 	while(queue_length(*ready_q) > 0){
 		uthread_yield();
 	}
 
+	preempt_stop();
+
 	return 0;
 }
 
 void uthread_block(void)
 {
+	preempt_disable();
+
 	// Set temporary uthread_tcb pointer to global variable @current_uthread_tcb
 	struct uthread_tcb *uthread_prev = uthread_current();
 
@@ -127,5 +142,7 @@ void uthread_block(void)
 void uthread_unblock(struct uthread_tcb *uthread)
 {
 	// Enqueue thread TCB in the ready queue @ready_q
+	preempt_disable();
 	queue_enqueue(*ready_q, uthread);
+	preempt_enable();
 }

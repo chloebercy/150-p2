@@ -6,7 +6,8 @@ objs := \
 	context.o \
 	queue.o \
 	uthread.o \
-	sem.o
+	sem.o \
+	preempt.o
 
 # Don't print the commands unless explicitly requested with `make V=1`
 ifneq ($(V),1)
