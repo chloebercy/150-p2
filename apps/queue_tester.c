@@ -86,7 +86,8 @@ void test_delete(void)
 }
 
 /* Delete non-existing item */
-void test_delete_error(void){
+void test_delete_error(void)
+{
 	fprintf(stderr, "*** TEST delete_error ***\n");
 
 	int data1 = 3, data2 = 4;
@@ -100,13 +101,6 @@ void test_delete_error(void){
 	TEST_ASSERT(queue_delete(q, &data3) == -1);
 
 }
-
-
-/*static void delete(queue_t q, void *data)
-{
-	queue_delete(q, data);
-	fprintf(stderr, "?");
-}*/
 
 static void iterator_print(queue_t q, void *data)
 {
@@ -128,7 +122,7 @@ void test_iterate()
 	queue_enqueue(q, &data2);
 	queue_enqueue(q, &data3);
 	queue_iterate(q, iterator_print);
-;}
+}
 
 int main(void)
 {
