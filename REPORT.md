@@ -159,9 +159,9 @@ to false, these functions, even if called, will be ineffective.
 In order to ensure the functionality of the APIs, several test programs were
 used.
 
-Other than the ones already provided, we have created two programs: 
-`queue_tester.c` to test the Queue API and `preempt_tester.c` to test the 
-preemption API. 
+Other than the ones already provided, we have created three programs: 
+`queue_tester.c` to test the Queue API, `preempt_tester.c` to test the 
+preemption API, and `sem_starve.c` to test starvation handling by the semaphore. 
 
 In `queue_tester.c`, there are a few test cases to test each of the functions in
 the queue API. These test cases check for successful completion of the desired
@@ -171,6 +171,9 @@ functions ability, but also the handling of errors and incorrect usage.
 CPU by using `sleep()`. This program handles two threads that continuously call
 `sleep()` which forces them to be preempted and yield to the other until 
 completion. 
+
+`sem_starve.c` tests if the semaphore will make sure `thread1`, which has been
+unable to access a resource, is prioritized to become "unstarved".
 
 #### Sources
 - [23.4 Complete Context Control](https://www.gnu.org/software/libc/manual/2.36/html_mono/libc.html#index-getcontext)

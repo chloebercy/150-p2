@@ -7,7 +7,6 @@
 #include <sys/time.h>
 
 #include <unistd.h>
-#include <stdio.h> // delete
 #include <string.h>
 
 #include "private.h"
@@ -34,21 +33,12 @@ void timer_handler(int signum)
 void preempt_disable(void)
 {
 	sigprocmask(SIG_BLOCK, &block_alarm, NULL);
-	//printf("preempt_disable\n");
 }
 
 void preempt_enable(void)
 {
-	//printf("preempt_enable\n");
 	sigprocmask(SIG_UNBLOCK, &block_alarm, NULL);
 }
-
-/*void preempt_check(void){
-	struct itimerval check;
-	getitimer(ITIMER_REAL, &check);
-	printf("check = %ld\n", check.it_value.tv_usec);
-	setitimer(ITIMER_REAL, timer, NULL);
-}*/
 
 void preempt_start(bool preempt)
 {

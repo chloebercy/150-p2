@@ -1,5 +1,5 @@
 /*
- * Semaphore simple test
+ * Semaphore starvation test
  *
  * Test whether semaphore will correctly handle starved threads.
  */
@@ -48,7 +48,7 @@ static void thread4(void *arg)
 	(void)arg;
 
 	printf("thread4 : sem_up\n");
-	sem_up(sem1);		/* Unblock thread2 */
+	sem_up(sem1);
 	printf("thread4 : exit\n");
 }
 
@@ -60,7 +60,7 @@ static void thread3(void *arg)
 	uthread_create(thread5, NULL);
 
 	printf("thread3 : sem_down\n");
-	sem_down(sem1);		/* Unblock thread2 */
+	sem_down(sem1);
 	printf("thread3 : exit\n");
 }
 
@@ -69,7 +69,7 @@ static void thread2(void *arg)
 	(void)arg;
 
 	printf("thread2 : sem_up\n");
-	sem_up(sem1);		/* Unblock thread1 */
+	sem_up(sem1);
 	printf("thread2 : exit\n");
 }
 
@@ -81,7 +81,7 @@ static void thread1(void *arg)
 	uthread_create(thread3, NULL);
 
 	printf("thread1 : sem_down\n");
-	sem_down(sem1); 	/* Wait for thread 2 */
+	sem_down(sem1);
 	printf("thread1 : sem_up\n");
 	sem_up(sem1);
 	printf("thread1 : exit\n");
