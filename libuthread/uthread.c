@@ -40,6 +40,8 @@ void uthread_yield(void)
 
 	// Context Switch
 	uthread_ctx_switch(uthread_prev->uthread_ctx, uthread_next->uthread_ctx);
+
+	preempt_enable();
 }
 
 void uthread_exit(void)
@@ -66,7 +68,7 @@ void uthread_exit(void)
 }
 
 int uthread_create(uthread_func_t func, void *arg)
-{
+{	
 	// Initalize newTCB pointer, uthread_ctx pointer, top of stack pointer
 	preempt_disable();
 	struct uthread_tcb *newTCB = (struct uthread_tcb*)malloc(sizeof(struct uthread_tcb));
@@ -137,6 +139,8 @@ void uthread_block(void)
 
 	// Context Switch
 	uthread_ctx_switch(uthread_prev->uthread_ctx, uthread_next->uthread_ctx);
+
+	preempt_enable();
 }
 
 void uthread_unblock(struct uthread_tcb *uthread)

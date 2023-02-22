@@ -51,9 +51,11 @@ the `POSIX thread` or `pthread`. In this project, we only implement the
 following functions: `uthread_yield()`, `uthread_exit()`, `uthread_create()`, 
 `uthread_run()`, `uthread_block()`, and `uthread_unblock()`.
 
-It's important to note that we have the following global variables: `struct 
-uthread **current` and `queue_t *ready_q`. This is so that all of the functions 
-in `uthread.c` have access to the thread control blocks and the queue. 
+It's important to note that we have the following global variables: 
+`struct uthread **current` and `queue_t *ready_q`. This is so that all of the 
+functions in `uthread.c` have access to the thread control blocks and the queue. 
+When a thread is active, it calls `uthread_current()` and accesses `**current` 
+to refer to its own TCB.
 
 The function to first be called by the application is `uthread_run()` which 
 creates the first user thread. We inititalize the `ready_q` using the 
