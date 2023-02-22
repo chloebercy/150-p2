@@ -26,7 +26,7 @@ sigset_t block_alarm;
 void timer_handler(int signum)
 {
 	int check = write(1, "ALARM\n", 6);
-	if (signum != SIGVTALRM || check == -1){
+	if (signum != SIGALRM || check == -1){
 		return;
 	}
 	uthread_yield();
@@ -34,21 +34,21 @@ void timer_handler(int signum)
 
 void preempt_disable(void)
 {
-	//sigprocmask(SIG_BLOCK, &block_alarm, NULL);
+	sigprocmask(SIG_BLOCK, &block_alarm, NULL);
 	printf("preempt_disable\n");
 }
 
 void preempt_enable(void)
 {
 	printf("preempt_enable\n");
-	//sigprocmask(SIG_UNBLOCK, &block_alarm, NULL);
+	sigprocmask(SIG_UNBLOCK, &block_alarm, NULL);
 }
 
 void preempt_check(void){
 	struct itimerval check;
-	getitimer(ITIMER_VIRTUAL, &check);
+	getitimer(ITIMER_REAL, &check);
 	printf("check = %ld\n", check.it_value.tv_usec);
-	setitimer(ITIMER_VIRTUAL, timer, NULL);
+	setitimer(ITIMER_REAL, timer, NULL);
 }
 
 void preempt_start(bool preempt)
@@ -63,10 +63,10 @@ void preempt_start(bool preempt)
 	sigemptyset(&(preempt_sa->sa_mask));
     preempt_sa->sa_flags = 0;
     preempt_sa->sa_handler = timer_handler;
-	sigaction(SIGVTALRM, preempt_sa, previous_sa);
+	sigaction(SIGALRM, preempt_sa, previous_sa);
 
 	sigemptyset (&block_alarm);
-  	sigaddset (&block_alarm, SIGVTALRM);
+  	sigaddset (&block_alarm, SIGALRM);
 
   	timer->it_interval.tv_usec = (long int) 1000; //(long int) 10000 / HZ; //1000000
   	timer->it_interval.tv_sec = 0;
@@ -76,17 +76,17 @@ void preempt_start(bool preempt)
 	printf("check?? = %ld\n", timer->it_value.tv_usec);
 
 	if (preempt){
-		int check = setitimer(ITIMER_VIRTUAL, timer, previous_timer);
+		int check = setitimer(ITIMER_REAL, timer, previous_timer);
 		fprintf(stderr, "started timer? %d\n", check);
 		preempt_check();
 	} else {
-		getitimer(ITIMER_VIRTUAL, previous_timer);
+		getitimer(ITIMER_REAL, previous_timer);
 	}		
 }
 
 void preempt_stop(void)
 {
-	setitimer(ITIMER_VIRTUAL, previous_timer, NULL);
-	sigaction(SIGVTALRM, previous_sa, NULL);
+	setitimer(ITIMER_REAL, previous_timer, NULL);
+	sigaction(SIGALRM, previous_sa, NULL);
 }
 
