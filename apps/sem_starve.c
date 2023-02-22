@@ -17,8 +17,9 @@ static void thread7(void *arg)
 {
 	(void)arg;
 
-	printf("thread7 : sem_down\n");
+	printf("thread7 : try sem_down\n");
 	sem_down(sem1);
+	printf("thread7 : success sem_down\n");
 	printf("thread7 : exit\n");
 }
 
@@ -39,6 +40,7 @@ static void thread5(void *arg)
 	uthread_create(thread7, NULL);
 
 	printf("thread5 : sem_down\n");
+	printf("thread5 : success sem_down\n");
 	sem_down(sem1);
 	printf("thread5 : exit\n");
 }
@@ -59,8 +61,9 @@ static void thread3(void *arg)
 	uthread_create(thread4, NULL);
 	uthread_create(thread5, NULL);
 
-	printf("thread3 : sem_down\n");
+	printf("thread3 : try sem_down\n");
 	sem_down(sem1);
+	printf("thread3 : success sem_down\n");
 	printf("thread3 : exit\n");
 }
 
@@ -80,8 +83,9 @@ static void thread1(void *arg)
 	uthread_create(thread2, NULL);
 	uthread_create(thread3, NULL);
 
-	printf("thread1 : sem_down\n");
+	printf("thread1 : try sem_down\n");
 	sem_down(sem1);
+	printf("thread1 : success sem_down\n");
 	printf("thread1 : sem_up\n");
 	sem_up(sem1);
 	printf("thread1 : exit\n");
