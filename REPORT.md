@@ -131,6 +131,11 @@ executed, calls the `queue_dequeue()` function to take the oldest item in the
 back into the `ready_q`.
 
 #### Preemption
+TO NOTE: The implementation of preemption does not currently work as desired.
+It uses ITIMER_REAL and SIGALRM, instead of ITIMER_VIRTUAL and SIGVTALARM due to
+difficitulties in debugging issues with unsuccessful `setitimer(ITIMER_VIRTUAL)`
+calls. 
+
 The preemption API exists to prevent uncooperative threads from keeping the 
 processing resource for themselves. We have implemented the following functions:
 `preempt_start()`, `preempt_stop()`, `preempt_enable`, and `preempt_disable()`. 
@@ -138,26 +143,34 @@ processing resource for themselves. We have implemented the following functions:
 In `preempt_start()`, we simply configure the timer interrupt handler. It then 
 takes `preempt`, the boolean value passed through the function's parameter and 
 checks if it is true--if yes, the timer begins by calling the `setitimer()`. If 
-not, then nothing happens. 
+not, the function calls `getitimer()` to simply store the intial timer 
+configuration which will be used when `preempt_stop()` is called. 
 
 `preempt_stop()` stops the thread preemption. This function does this by passing 
-`NULL` into the `setitimer()` and `sigaction()` timers. This restores the 
-previous timer configuration and action associated with the virtual alarm 
-signals.
+`previous_timer` and `previous_sa` (sigaction) into the `setitimer()` and 
+`sigaction()` timers. This restores the previous timer configuration and action
+associated with the virtual alarm signals.
 
 `preempt_enable()` and `preempt_disable()` utilizes the `sigprocmask()` to block
-or unblock the signals, respectively. 
+or unblock the virtual signals, respectively. For cases where `preempt` is set 
+to false, these functions, even if called, will be ineffective.
 
 #### Testing
 In order to ensure the functionality of the APIs, several test programs were
 used.
 
 Other than the ones already provided, we have created two programs: 
-`queue_tester.c` to test the Queue API and `test_preempt.c` to test the 
+`queue_tester.c` to test the Queue API and `preempt_tester.c` to test the 
 preemption API. 
 
 In `queue_tester.c`, there are a few test cases to test each of the functions in
-the queue API. 
+the queue API. These test cases check for successful completion of the desired
+functions ability, but also the handling of errors and incorrect usage.  
+
+`preempt_tester.c` tests the handling of threads that run for too long on the 
+CPU by using `sleep()`. This program handles two threads that continuously call
+`sleep()` which forces them to be preempted and yield to the other until 
+completion. 
 
 #### Sources
 - [23.4 Complete Context Control](https://www.gnu.org/software/libc/manual/2.36/html_mono/libc.html#index-getcontext)
